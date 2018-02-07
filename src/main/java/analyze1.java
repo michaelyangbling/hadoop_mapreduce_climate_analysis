@@ -11,7 +11,19 @@ class mapper {
 class reducer{
    reduce(station, [ ..., [ (min temp, 1or0), (max temp, 1or0) ], ...]
      emit(station, mean min temp, min max temp
+
 }
+
+class combiner{
+   reduce(station, [,,,[ ( min temp, 1or0), (max temp, 1or0) ]...] )
+   emit(station, [,,,[ ( min temp, count), (max temp, count) ]...] )
+
+}
+1) Please push source code,build files(pom and make) and readme in the git. .class files and other ide related file should not be pushed in the git. There will be deduction of marks starting next time.﻿﻿﻿﻿﻿
+
+2) Please commit the code in regular intervals. Code committed in non regular interval can loose marks from next time.
+
+3) Please try to follow oops concept, modularization and naming  convention while writing your code.
 */
 
 
@@ -88,6 +100,24 @@ public class analyze1 {
         }
     }
 
+    public static class combiner
+            extends Reducer<Text,NumPair,Text,NumPair> {
+        private NumPair result = new NumPair();
+
+        public void reduce(Text key, Iterable<NumPair> values,
+                           Context context
+        ) throws IOException, InterruptedException {
+            result.Count_max=0;result.Count_min = 0;
+            result.Sum_max=0;result.Sum_min=0;
+            for (NumPair val : values) {
+                result.Count_max+=val.Count_max;result.Sum_max+=val.Sum_max;
+                result.Count_min+=val.Count_min;result.Sum_min+=val.Sum_min;
+                //sum += val.get();
+            }
+            context.write(key, result);
+        }
+    }
+
     public static class MeanReducer
             extends Reducer<Text,NumPair,Text,Text> {
         private Text result = new Text();
@@ -96,7 +126,7 @@ public class analyze1 {
                            Context context
         ) throws IOException, InterruptedException {
             int count_max=0;int count_min = 0;
-            float sum_max=0;int sum_min=0;
+            float sum_max=0;float sum_min=0;
             for (NumPair val : values) {
                 count_max+=val.Count_max; sum_max+=val.Sum_max;
                 count_min+=val.Count_min; sum_min+=val.Sum_min;
@@ -117,7 +147,7 @@ public class analyze1 {
         Job job = Job.getInstance(conf, "myjob");
         job.setJarByClass(analyze1.class);
         job.setMapperClass(myMapper.class);
-        //job.setCombinerClass(IntSumReducer.class);
+        job.setCombinerClass(combiner.class);
         job.setReducerClass(MeanReducer.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
