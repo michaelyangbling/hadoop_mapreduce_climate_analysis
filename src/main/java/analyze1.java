@@ -50,33 +50,16 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.io.*;
 import java.io.*;
-class NumPair implements Writable { //define a data structure to store some data
-    int Count_max; float Sum_max;
-    int Count_min; float Sum_min;
-    public NumPair(int Count_max,float Sum_max,int Count_min,float Sum_min) {
-        this.Count_max=Count_max;
-        this.Sum_max=Sum_max;
-        this.Count_min=Count_min;
-        this.Sum_min=Sum_min;
 
-    }
-    public void write(DataOutput out) throws IOException {
-        out.writeInt(Count_max);out.writeFloat(Sum_max);
-        out.writeInt(Count_min);out.writeFloat(Sum_min);
-    }
-    public void readFields(DataInput in) throws IOException {
-        Count_max = in.readInt();Sum_max = in.readFloat();
-        Count_min = in.readInt();Sum_min = in.readFloat();
-
-    }
-
-}
 
 public class analyze1 {
-/*    public static class NumPair implements Writable { //define a data structure to store some data
-        private int Count_max;private float Sum_max;
-        private int Count_min;private float Sum_min;
-        NumPair() {}
+
+    public static class NumPair implements Writable { //define a data structure to store some data
+        int Count_max; float Sum_max;
+        int Count_min; float Sum_min;
+        public NumPair() {
+
+        }
         public void write(DataOutput out) throws IOException {
             out.writeInt(Count_max);out.writeFloat(Sum_max);
             out.writeInt(Count_min);out.writeFloat(Sum_min);
@@ -84,13 +67,14 @@ public class analyze1 {
         public void readFields(DataInput in) throws IOException {
             Count_max = in.readInt();Sum_max = in.readFloat();
             Count_min = in.readInt();Sum_min = in.readFloat();
-        }
-    }*/
 
+        }
+
+    }
     public static class myMapper
             extends Mapper<Object, Text, Text, NumPair>{
 
-        private  NumPair pair = new NumPair(0,0,0,0);
+        private  NumPair pair = new NumPair();
         private Text station = new Text();
 
         public void map(Object key, Text value, Context context
@@ -130,30 +114,36 @@ public class analyze1 {
             //pair.Count_max=0;pair.Sum_max=0;pair.Count_min=0;pair.Sum_min=0;
             if( line2.get(2).equals("TMAX") ) {
                 if( all.get(line2.get(0))==null ){
-                    NumPair p=new NumPair(1,Float.parseFloat(line2.get(3)),0,0);
+                    NumPair p=new NumPair();
+                    p.Count_max=1; p.Sum_max=Float.parseFloat(line2.get(3)); p.Count_min=0;p.Sum_min=0;
                     all.put(line2.get(0),p);
                 }
                 else{ NumPair pair=all.get(line2.get(0));
                     float sum_max=Float.parseFloat(line2.get(3) )+pair.Sum_max;
                 int count_max=1+pair.Count_max;
-                all.put(line2.get(0),new NumPair(count_max,sum_max,pair.Count_min, pair.Sum_min));
+                    NumPair p=new NumPair();
+                    p.Count_max=count_max; p.Sum_max=sum_max; p.Count_min=pair.Count_min; p.Sum_min=pair.Sum_min;
+                all.put(line2.get(0),p);
                 }
             }
             else if (line2.get(2).equals("TMIN") ) {
                 if( all.get(line2.get(0))==null ){
-                    NumPair p=new NumPair(1,0,1,Float.parseFloat(line2.get(3)));
+                    NumPair p=new NumPair();
+                    p.Count_max=1; p.Sum_max=0; p.Count_min=1;p.Sum_min=Float.parseFloat(line2.get(3));
                     all.put(line2.get(0),p);
                 }
                 else{ NumPair pair=all.get(line2.get(0));
+                    NumPair p=new NumPair();
                     float sum_min=Float.parseFloat(line2.get(3) )+pair.Sum_min;
                     int count_min=1+pair.Count_min;
-                    all.put(line2.get(0),new NumPair(pair.Count_max,pair.Sum_max,count_min, sum_min));
+                    p.Count_max=pair.Count_max; p.Sum_max=pair.Sum_max; p.Count_min=count_min; p.Sum_min=sum_min;
+                    all.put(line2.get(0),p);
                 }
                 }
             else {}
 
         }
-        protected void cleanup(org.apache.hadoop.mapreduce.Mapper.Context context)
+        protected void cleanup(Context context)
                 throws IOException, InterruptedException{
             for(String val: all.keySet()){
                 context.write(new Text(val), all.get(val));
@@ -165,7 +155,7 @@ public class analyze1 {
 
     public static class combiner
             extends Reducer<Text,NumPair,Text,NumPair> {
-        private NumPair result = new NumPair(0,0,0,0);
+        private NumPair result = new NumPair();
 
         public void reduce(Text key, Iterable<NumPair> values,
                            Context context
@@ -209,8 +199,8 @@ public class analyze1 {
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "myjob");
         job.setJarByClass(analyze1.class);
-        if(args[2].equals("inner_combine_yep")) {job.setMapperClass(CombiningMapper.class);
-        System.out.println("inner_combine");}
+        if(args[2].equals("inner_combine")) {job.setMapperClass(CombiningMapper.class);
+        System.out.println("inner_combine_yep");}
         else{job.setMapperClass(myMapper.class);}
 
         if(args[2].equals("combine")){
