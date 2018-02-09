@@ -1,8 +1,6 @@
 
-
 /*pseudo code:
 1.naive way
-
 class mapper {
    map(line, text){
    emit( station, [ (min temp, 1 or 0), (max temp, 1 or 0) ] )
@@ -12,14 +10,11 @@ class reducer{
    reduce(station, [ ..., [ (min temp, 1or0), (max temp, 1or0) ], ...]
      emit(station, mean min temp, min max temp
 }
-
-
 2 +combiner
 class combiner{
    reduce(station, [,,,[ ( min temp, 1or0), (max temp, 1or0) ]...] )
    emit(station, [,,,[ ( min temp, count), (max temp, count) ]...] )
 }
-
 3 +in-mappper combine
 class mapper {
    private hashmap H    //H: {...(station,[ min temp, count_min, max temp, count_max ]...}
@@ -29,13 +24,9 @@ class mapper {
    }
    cleanup(){emit H}
 }
-1) Please push source code,build files(pom and make) and readme in the git. .class files and other ide related file should not be pushed in the git. There will be deduction of marks starting next time.﻿﻿﻿﻿﻿
-2) Please commit the code in regular intervals. Code committed in non regular interval can loose marks from next time.
-3) Please try to follow oops concept, modularization and naming  convention while writing your code.
+
+
 */
-
-
-
 
 
 
@@ -120,10 +111,10 @@ public class analyze1 {
                 }
                 else{ NumPair pair=all.get(line2.get(0));
                     float sum_max=Float.parseFloat(line2.get(3) )+pair.Sum_max;
-                int count_max=1+pair.Count_max;
+                    int count_max=1+pair.Count_max;
                     NumPair p=new NumPair();
                     p.Count_max=count_max; p.Sum_max=sum_max; p.Count_min=pair.Count_min; p.Sum_min=pair.Sum_min;
-                all.put(line2.get(0),p);
+                    all.put(line2.get(0),p);
                 }
             }
             else if (line2.get(2).equals("TMIN") ) {
@@ -139,7 +130,7 @@ public class analyze1 {
                     p.Count_max=pair.Count_max; p.Sum_max=pair.Sum_max; p.Count_min=count_min; p.Sum_min=sum_min;
                     all.put(line2.get(0),p);
                 }
-                }
+            }
             else {}
 
         }
@@ -199,12 +190,12 @@ public class analyze1 {
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "myjob");
         job.setJarByClass(analyze1.class);
-        if(args[2].equals("inner_combine")) {job.setMapperClass(CombiningMapper.class);
-        System.out.println("inner_combine_yep");}
+        if(args[2].equals("inner_combine")) {job.setMapperClass(CombiningMapper.class);//select version
+            System.out.println("inner_combine_yep");}
         else{job.setMapperClass(myMapper.class);}
 
         if(args[2].equals("combine")){
-        job.setCombinerClass(combiner.class);System.out.println("combine_yep");}
+            job.setCombinerClass(combiner.class);System.out.println("combine_yep");}
 
         job.setReducerClass(MeanReducer.class);
         job.setOutputKeyClass(Text.class);
